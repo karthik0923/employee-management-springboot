@@ -63,7 +63,7 @@ class EmployeeServiceTest {
 	void createEmployeeSavesWhenEmailIsAvailable() {
 		EmployeeRequest request = sampleRequest();
 		when(employeeRepository.existsByEmailIgnoreCase("ada.lovelace@example.com")).thenReturn(false);
-		when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> persisted(invocation.getArgument(0), 1L));
+		when(employeeRepository.saveAndFlush(any(Employee.class))).thenAnswer(invocation -> persisted(invocation.getArgument(0), 1L));
 
 		EmployeeResponse response = employeeService.createEmployee(request);
 
@@ -73,7 +73,7 @@ class EmployeeServiceTest {
 		assertThat(response.getCreatedAt()).isNotNull();
 
 		ArgumentCaptor<Employee> captor = ArgumentCaptor.forClass(Employee.class);
-		verify(employeeRepository).save(captor.capture());
+		verify(employeeRepository).saveAndFlush(captor.capture());
 		assertThat(captor.getValue().getEmail()).isEqualTo("ada.lovelace@example.com");
 	}
 
@@ -86,7 +86,7 @@ class EmployeeServiceTest {
 				.isInstanceOf(DuplicateEmailException.class)
 				.hasMessageContaining("ada.lovelace@example.com");
 
-		verify(employeeRepository, never()).save(any());
+		verify(employeeRepository, never()).saveAndFlush(any());
 	}
 
 	@Test
@@ -133,7 +133,7 @@ class EmployeeServiceTest {
 		Employee existing = persistedEmployee(1L);
 		when(employeeRepository.findById(1L)).thenReturn(Optional.of(existing));
 		when(employeeRepository.existsByEmailIgnoreCaseAndIdNot("ada.lovelace@example.com", 1L)).thenReturn(false);
-		when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		when(employeeRepository.saveAndFlush(any(Employee.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		EmployeeRequest request = new EmployeeRequest("Ada", "Byron", "ada.lovelace@example.com", "Research",
 				new BigDecimal("150000.00"));
@@ -156,7 +156,7 @@ class EmployeeServiceTest {
 
 		assertThatThrownBy(() -> employeeService.updateEmployee(1L, request))
 				.isInstanceOf(DuplicateEmailException.class);
-		verify(employeeRepository, never()).save(any());
+		verify(employeeRepository, never()).saveAndFlush(any());
 	}
 
 	@Test

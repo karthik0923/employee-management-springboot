@@ -532,7 +532,7 @@ A: `findById` hits the DB and returns `Optional`. `getReferenceById` may return 
 A: Hibernate tracks loaded entities. If you change a field inside a transaction, it issues UPDATE on flush/commit even without calling `save`. We still call `save` because it is explicit and easier to follow.
 
 **Q: `save` vs `saveAndFlush`?**  
-A: `save` schedules SQL; flush happens at commit. `saveAndFlush` sends SQL immediately (useful when you need the generated id before commit in some mappings; `IDENTITY` already retrieves the id on persist).
+A: `save` schedules SQL; flush happens at commit. `@PreUpdate` therefore would run *after* we mapped `EmployeeResponse`, so `updatedAt` would look stale in the JSON. This project uses `saveAndFlush` so timestamps are populated before the response is built. `IDENTITY` inserts already flush to fetch the generated id.
 
 **Q: How do you handle exceptions in REST APIs?**  
 A: `@RestControllerAdvice` + `@ExceptionHandler`. Do not scatter try/catch in controllers.

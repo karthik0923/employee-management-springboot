@@ -56,7 +56,9 @@ public class EmployeeServiceImpl implements EmployeeService {
 	public EmployeeResponse createEmployee(EmployeeRequest request) {
 		assertEmailAvailable(request.getEmail(), null);
 		Employee employee = employeeMapper.toEntity(request);
-		Employee saved = employeeRepository.save(employee);
+		// IDENTITY insert flushes immediately so the generated id and @PrePersist
+		// timestamps are available before we map the response.
+		Employee saved = employeeRepository.saveAndFlush(employee);
 		return employeeMapper.toResponse(saved);
 	}
 
@@ -78,7 +80,11 @@ public class EmployeeServiceImpl implements EmployeeService {
 		Employee employee = findEmployee(id);
 		assertEmailAvailable(request.getEmail(), id);
 		employeeMapper.updateEntity(employee, request);
-		Employee saved = employeeRepository.save(employee);
+		// save() only schedules the UPDATE. @PreUpdate runs at flush, which by
+		// default is at transaction commit — after this method already mapped
+		// the response. saveAndFlush forces Hibernate to run @PreUpdate now so
+		// updatedAt in the JSON is current. Interview topic: flush timing.
+		Employee saved = employeeRepository.saveAndFlush(employee);
 		return employeeMapper.toResponse(saved);
 	}
 
